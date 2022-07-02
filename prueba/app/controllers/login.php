@@ -16,35 +16,45 @@ $user = DB::table('usuario')
     ->where('correo', '=', $correo)
     ->first();
 
-if ($user == null) {
-    header('Location: http://localhost/pruebaSUNTIC/prueba/inicio.php');
-}
+if ($user) {
 
 
-if ($pass != $user->password) {
-    die('<br> error contraseña');
-}
 
-$token = QrCode::generateCode($correo);
 
-if (DB::table('user_factor')->where('id_usuario', '=', $user->id_usuario)->first() == null) {
-    DB::table('user_factor')->insert([
-        'id_usuario' => $user->id_usuario,
-        'token' => $token,
-        'fecha_creacion' => new DateTime,
-    ]);
+    if ($pass != $user->password) {
+        echo '<script>
+        alert("el correo o contraseña errado");
+        window.location.href="../../index.php";
+        </script>';
+    } else {
+
+        $token = QrCode::generateCode($correo);
+
+        if (DB::table('user_factor')->where('id_usuario', '=', $user->id_usuario)->first() == null) {
+            DB::table('user_factor')->insert([
+                'id_usuario' => $user->id_usuario,
+                'token' => $token,
+                'fecha_creacion' => new DateTime,
+            ]);
+        } else {
+            DB::table('user_factor')
+                ->where('id_usuario', '=', $user->id_usuario)
+                ->update([
+                    'token' => $token,
+                    'fecha_creacion' => new DateTime,
+                ]);
+        }
+
+        Mail::enviomensaje($user->correo, $user->nombre, '../../imagesqr/' . $user->correo . '/code.png', 'autenticate', '<b>por favor abra la imagen y escanee el codigo QR</b>');
+
+        $_SESSION['user'] = array('id' => $user->id_usuario, 'nombre' => $user->nombre, 'correo' => $user->correo, 'check_token' => 0);
+
+
+        header('Location: http://localhost/logindoblefactor/prueba/secondfactor.php');
+    }
 } else {
-    DB::table('user_factor')
-        ->where('id_usuario', '=', $user->id_usuario)
-        ->update([
-            'token' => $token,
-            'fecha_creacion' => new DateTime,
-        ]);
+    echo '<script>
+    alert("el correo o contraseña errado");
+    window.location.href="../../index.php";
+    </script>';
 }
-
-Mail::enviomensaje($user->correo, $user->nombre, '../../imagesqr/' . $user->correo . '/code.png', 'autenticate', '<b>por favor abra la imagen y escanee el codigo QR</b>');
-
-$_SESSION['user'] = array('id' => $user->id_usuario, 'nombre' => $user->nombre, 'correo' => $user->correo, 'check_token' => 0);
-
-
-header('Location: http://localhost/pruebaSUNTIC/prueba/secondfactor.php');

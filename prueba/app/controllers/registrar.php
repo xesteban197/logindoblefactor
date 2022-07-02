@@ -14,6 +14,26 @@ $password = $_POST['password'];
 $repassword = $_POST['repassword'];
 
 
+if (DB::table('usuario')->where('correo', '=', $correo)->first() == null) {
+
+    if ($repassword == $password) {
+        echo '<script>
+    alert("registro exitoso");
+    window.location.href="../../index.php";
+    </script>';
+    } else {
+        echo '<script>
+    alert("las contraseñas no cohinciden");
+    window.location.href="../../registro.php";
+    </script>';
+    }
+} else {
+    echo '<script>
+    alert("el correo ya esta registrado");
+    window.location.href="../../registro.php";
+    </script>';
+}
+
 
 DB::table('usuario')->insert([
     'nombre' => $nombre,
@@ -24,5 +44,3 @@ DB::table('usuario')->insert([
     'correo' => $correo,
     'password' => $password
 ]);
-
-echo "grabo";
